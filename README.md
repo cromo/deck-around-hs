@@ -9,6 +9,7 @@ Developing
 ```
 cabal install scotty
 cabal install cookie
+cabal install hedis
 ghc -o deck-around deck-around.hs
 ./deck-around
 ```

@@ -3,10 +3,12 @@
 import Web.Scotty
 
 import Data.Monoid (mconcat)
+import Control.Monad.IO.Class
 import qualified Data.Text.Lazy as LT
 import Data.Text.Lazy.Encoding (encodeUtf8,decodeUtf8)
 import Data.Aeson (ToJSON(toJSON),object,(.=))
 import Web.Cookie
+import qualified Database.Redis as R
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
@@ -15,23 +17,27 @@ import qualified Data.ByteString.Lazy as BSL
 
 import qualified Data.Map as M
 
-main = scotty 3000 $ do
-  get "/" $ do
-    redirect $ LT.pack joinRoute
-  get (literal joinRoute) $ do
-    html . LT.pack $ joinTemplate []
-  post (literal joinRoute) $ do
-    name <- param "name"
-    -- TODO: get players from a data store instead of using constants.
-    if playerExists name players then html . LT.pack $ joinTemplate [Flash "Name already taken. Please choose another."]
-    else do
-      setCookie (BSC.pack "name") (BSC.pack name)
-      redirect $ LT.pack gameRoute
-  get (literal gameRoute) $ do
-    cookies <- getCookies
-    case cookies of
-      Just cs -> text $ cookieName cs
-      Nothing -> html . LT.pack $ joinTemplate [Flash "You're not signed in. Please sign in."]
+main = do
+  conn <- R.connect R.defaultConnectInfo
+  scotty 3000 $ do
+    get "/" $ do
+      redirect $ LT.pack joinRoute
+    get (literal joinRoute) $ do
+      ping <- liftIO $ R.runRedis conn $ R.ping
+      html . LT.pack $ show ping
+      --html . LT.pack $ joinTemplate []
+    post (literal joinRoute) $ do
+      name <- param "name"
+      -- TODO: get players from a data store instead of using constants.
+      if playerExists name players then html . LT.pack $ joinTemplate [Flash "Name already taken. Please choose another."]
+      else do
+        setCookie (BSC.pack "name") (BSC.pack name)
+        redirect $ LT.pack gameRoute
+    get (literal gameRoute) $ do
+      cookies <- getCookies
+      case cookies of
+        Just cs -> text $ cookieName cs
+        Nothing -> html . LT.pack $ joinTemplate [Flash "You're not signed in. Please sign in."]
 
 data Player = Player { name :: String }
   deriving Show
