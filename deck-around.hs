@@ -23,9 +23,7 @@ main = do
     get "/" $ do
       redirect $ LT.pack joinRoute
     get (literal joinRoute) $ do
-      ping <- liftIO $ R.runRedis conn $ R.ping
-      html . LT.pack $ show ping
-      --html . LT.pack $ joinTemplate []
+      html . LT.pack $ joinTemplate []
     post (literal joinRoute) $ do
       name <- param "name"
       -- TODO: get players from a data store instead of using constants.
@@ -38,6 +36,13 @@ main = do
       case cookies of
         Just cs -> text $ cookieName cs
         Nothing -> html . LT.pack $ joinTemplate [Flash "You're not signed in. Please sign in."]
+    get "/test-redis" $ do
+      ping <- runRedis conn $ R.ping
+      runRedis conn $ R.set "hello" "hello"
+      runRedis conn $ R.set "world" "world"
+      hello <- runRedis conn $ R.get "hello"
+      world <- runRedis conn $ R.get "world"
+      html . LT.pack $ mconcat [show ping, show hello, show world]
 
 data Player = Player { name :: String }
   deriving Show
@@ -100,3 +105,6 @@ cookiesToMap cs = M.fromList $ map (\(k, v) -> (LT.fromStrict k, LT.fromStrict v
 
 cookieName :: CookiesText -> LT.Text
 cookieName cs = (cookiesToMap cs) M.! "name"
+
+runRedis :: R.Connection -> R.Redis a -> ActionM a
+runRedis c r = liftIO $ R.runRedis c r
