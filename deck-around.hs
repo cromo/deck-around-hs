@@ -27,7 +27,7 @@ main = do
     post (literal joinRoute) $ do
       name <- param "name"
       -- TODO: get players from a data store instead of using constants.
-      if playerExists name players then html . LT.pack $ joinTemplate [Flash "Name already taken. Please choose another."]
+      if playerExists name samplePlayers then html . LT.pack $ joinTemplate [Flash "Name already taken. Please choose another."]
       else do
         setCookie (BSC.pack "name") (BSC.pack name)
         redirect $ LT.pack gameRoute
@@ -43,18 +43,90 @@ main = do
       hello <- runRedis conn $ R.get "hello"
       world <- runRedis conn $ R.get "world"
       html . LT.pack $ mconcat [show ping, show hello, show world]
+    get "/test-json" $ do
+      json sampleGame
+      setContentType jsonUtf8
+
+data GameState = GameState { gameId :: String
+                           , phase :: GamePhase
+                           , players :: [Player]
+                           , rounds :: [Round]
+                           }
+  deriving Show
+
+data GamePhase = Starting
+               | Dealing
+               | Defining
+               | Discussing
+               | Voting
+               | Over
+  deriving Show
 
 data Player = Player { name :: String }
   deriving Show
 
-players :: [Player]
-players = [Player {name = "Dude"}]
+data Definition = Definition { author :: Player, definition :: String}
+  deriving Show
+
+data Vote = Vote { voter :: Player, votee :: Player }
+  deriving Show
+
+data Round = Round { roundNumber :: Int
+                   , roundDealer :: Player
+                   , prompt :: String
+                   , definitions :: [Definition]
+                   , votes :: [Vote]
+                   }
+  deriving Show
+
+sampleGame :: GameState
+sampleGame = GameState {gameId = "1"
+                       ,phase = Starting
+                       ,players = samplePlayers
+                       ,rounds = [Round 1 (Player "Dude") "Mangey Susan" [Definition (Player "Dude") "A nasty rash"] [Vote (Player "Dude") (Player "Dude")]]
+                       }
+
+samplePlayers :: [Player]
+samplePlayers = [Player {name = "Dude"}]
+
+playerExists :: String -> [Player] -> Bool
+playerExists n ps = any (\p -> name p == n) ps
+
+-- Game state/data transfer encoding
+
+instance ToJSON GameState where
+  toJSON (GameState game phase players rounds) = object ["id" .= game
+                                                        ,"phase" .= phase
+                                                        ,"players" .= samplePlayers
+                                                        ,"rounds" .= rounds
+                                                        ]
+
+instance ToJSON GamePhase where
+  toJSON Starting = "starting"
+  toJSON Dealing = "dealing"
+  toJSON Defining = "defining"
+  toJSON Discussing = "discussing"
+  toJSON Voting = "voting"
+  toJSON Over = "over"
+
+instance ToJSON Definition where
+  toJSON (Definition p d) = object ["player" .= p, "definition" .= d]
+
+instance ToJSON Vote where
+  toJSON (Vote s r) = object ["sender" .= s, "receiver" .= r]
 
 instance ToJSON Player where
   toJSON (Player name) = object ["name" .= name]
 
-playerExists :: String -> [Player] -> Bool
-playerExists n ps = any (\p -> name p == n) ps
+instance ToJSON Round where
+  toJSON (Round n d p def v) = object ["round" .= n
+                                      ,"dealer" .= d
+                                      ,"prompt" .= p
+                                      ,"definitions" .= def
+                                      ,"votes" .= v
+                                      ]
+
+-- Web entities
 
 data Flash = Flash String
   deriving Show
