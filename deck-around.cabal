@@ -17,7 +17,7 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 executable deck-around
-  main-is:             deck-around.hs
+  main-is:             DeckAroundServer.hs
   -- other-modules:       
   -- other-extensions:    
   build-depends:

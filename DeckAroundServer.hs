@@ -17,6 +17,9 @@ import qualified Data.ByteString.Lazy as BSL
 
 import qualified Data.Map as M
 
+import DeckAroundCore
+main = print $ endVoting $ Voting sampleRound $ Game samplePlayers []
+{-
 main = do
   conn <- R.connect R.defaultConnectInfo
   scotty 3000 $ do
@@ -180,3 +183,4 @@ cookieName cs = (cookiesToMap cs) M.! "name"
 
 runRedis :: R.Connection -> R.Redis a -> ActionM a
 runRedis c r = liftIO $ R.runRedis c r
+-}
