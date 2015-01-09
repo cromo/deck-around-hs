@@ -6,7 +6,7 @@ import Data.Monoid (mconcat)
 import Control.Monad.IO.Class
 import qualified Data.Text.Lazy as LT
 import Data.Text.Lazy.Encoding (encodeUtf8,decodeUtf8)
-import Data.Aeson (ToJSON(toJSON),object,(.=))
+import Data.Aeson (encode,ToJSON(toJSON),object,(.=))
 import Web.Cookie
 import qualified Database.Redis as R
 
@@ -18,7 +18,10 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Map as M
 
 import DeckAroundCore
-main = print $ endVoting $ Voting sampleRound $ Game samplePlayers []
+import DeckAroundCoreJson
+
+--main = print $ endVoting $ Voting sampleRound $ Game samplePlayers []
+main = print $ encode dude
 {-
 main = do
   conn <- R.connect R.defaultConnectInfo
