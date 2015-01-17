@@ -6,7 +6,7 @@ import Data.Monoid (mconcat)
 import Control.Monad.IO.Class
 import qualified Data.Text.Lazy as LT
 import Data.Text.Lazy.Encoding (encodeUtf8,decodeUtf8)
-import Data.Aeson (encode,ToJSON(toJSON),object,(.=))
+import Data.Aeson (decode,encode,ToJSON(toJSON),object,(.=))
 import Web.Cookie
 import qualified Database.Redis as R
 
@@ -21,7 +21,12 @@ import DeckAroundCore
 import DeckAroundCoreJson
 
 --main = print $ endVoting $ Voting sampleRound $ Game samplePlayers []
-main = putStrLn $ (BSC.unpack . BSC.concat . BSL.toChunks) $ encode $ sampleGame
+--main = putStrLn $ (BSC.unpack . BSC.concat . BSL.toChunks) $ encode $ sampleGame
+--main = putStrLn $ (BSC.unpack . BSC.concat . BSL.toChunks) $ encode $ WaitingForPlayers samplePlayers
+--main = print $ encode $ Vote man dude
+--main = print (decode "{\"voter\":\"Man\",\"votee\":\"Dude\"}" :: Maybe Vote)
+--main = print $ encode $ Definition man "Yeah"
+main = print (decode "{\"definition\":\"Yeah\",\"author\":\"Man\"}" :: Maybe Definition)
 {-
 main = do
   conn <- R.connect R.defaultConnectInfo
