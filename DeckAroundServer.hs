@@ -21,7 +21,7 @@ import DeckAroundCore
 import DeckAroundCoreJson
 
 --main = print $ endVoting $ Voting sampleRound $ Game samplePlayers []
-main = print $ encode dude
+main = putStrLn $ (BSC.unpack . BSC.concat . BSL.toChunks) $ encode $ sampleGame
 {-
 main = do
   conn <- R.connect R.defaultConnectInfo
