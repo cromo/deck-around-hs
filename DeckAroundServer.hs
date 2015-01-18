@@ -26,7 +26,13 @@ import DeckAroundCoreJson
 --main = print $ encode $ Vote man dude
 --main = print (decode "{\"voter\":\"Man\",\"votee\":\"Dude\"}" :: Maybe Vote)
 --main = print $ encode $ Definition man "Yeah"
-main = print (decode "{\"definition\":\"Yeah\",\"author\":\"Man\"}" :: Maybe Definition)
+--main = print (decode "{\"definition\":\"Yeah\",\"author\":\"Man\"}" :: Maybe Definition)
+--main = print $ encode sampleGame
+--main = print (decode "{\"players\":[\"Dude\",\"Dudette\",\"Man\"],\"rounds\":[{\"prompt\":\"Mangy Susan\",\"votes\":[{\"voter\":\"Dudette\",\"votee\":\"Man\"},{\"voter\":\"Man\",\"v otee\":\"Dudette\"}],\"dealer\":\"Dude\",\"definitions\":[{\"definition\":\"A cat on a spinning platform\",\"author\":\"Dude\"},{\"definition\":\"A patchy bush\",\"author\":\"Dudette\"},{\"definition\":\"A nasty rash\",\"author\":\"Man\"}]},{\"prompt\":\"Saftey Buzz\",\"votes\":[{\"voter\":\"Man\",\"votee\":\"Dudette\"},{\"voter\":\"Dude\",\"votee\":\"Dudette\"}],\"dealer\":\"Dudette\",\"definitions\":[{\"definition\":\"A drink taken as an excuse for poor decisions later\",\"author\":\"Dudette\"},{\"definition\":\"The guard on an electric razor\",\"author\":\"Man\"},{\"definition\":\"Cutting off hair to get rid of lice\",\"author\": \"Dude\"}]}]}" :: Maybe GameState)
+--main = print $ encode $ WaitingForPlayers samplePlayers
+--main = print (decode "{\"phase\":\"WaitingForPlayers\",\"players\":[\"Dude\",\"Dudette\",\"Man\"]}" :: Maybe GameState)
+--main = print $ encode $ Dealing man sampleGame
+main = print (decode "{\"phase\":\"Dealing\",\"dealer\":\"Man\",\"game\":{\"players\":[\"Dude\",\"Dudette\",\"Man\"],\"rounds\":[{\"prompt\":\"Mangy Susan\",\"votes\":[{\"voter\":\"Dudette\",\"votee\":\"Man\"},{\"voter\":\"Man\",\"votee\":\"Dudette\"}],\"dealer\":\"Dude\",\"definitions\":[{\"definition\":\"A cat on a spinning platform\",\"author\":\"Dude\"},{\"definition\":\"A patchy bush\",\"author\":\"Dudette\"},{\"definition\":\"A nasty rash\",\"author\":\"Man\"}]},{\"prompt\":\"Saftey Buzz\", \"votes\":[{\"voter\":\"Man\",\"votee\":\"Dudette\"},{\"voter\":\"Dude\",\"votee\":\"Dudette\"}],\"dealer\":\"Dudette\",\"definitions\":[{\"definition\":\"A dri nk taken as an excuse for poor decisions later\",\"author\":\"Dudette\"},{\"definition\":\"The guard on an electric razor\",\"author\":\"Man\"},{\"definition\": \"Cutting off hair to get rid of lice\",\"author\":\"Dude\"}]}]}}" :: Maybe GameState)
 {-
 main = do
   conn <- R.connect R.defaultConnectInfo
