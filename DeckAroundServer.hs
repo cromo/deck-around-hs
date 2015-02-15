@@ -22,8 +22,10 @@ import DeckAroundCore
 import DeckAroundCoreJson
 
 main = do
+    conn <- R.connect redisConnectInfo
+    redis <- return $ liftIO . R.runRedis conn
     scotty 3000 $ do
-        index
+        index redis
         joinGame
         startRound
         setPrompt
@@ -32,9 +34,12 @@ main = do
         vote
         endRound
 
-index :: ScottyM ()
-index = get "/" $ do
-    html $ LT.pack "Hello therea"
+redisConnectInfo :: R.ConnectInfo
+redisConnectInfo = R.defaultConnectInfo {R.connectHost = "redis"}
+
+index redis = get "/" $ do
+    ping <- redis R.ping
+    html $ LT.pack $ show ping
 
 joinGame :: ScottyM ()
 joinGame = post "/join" $ do
@@ -100,11 +105,6 @@ errorJson e = do
     json $ object ["error" .= e]
     status badRequest400
 
---sendJson :: a -> ActionM ()
---sendJson a = do
---    json a
---    setContentType jsonUtf8
-
 contentType :: LT.Text
 contentType = "Content-Type"
 
@@ -113,6 +113,9 @@ setContentType t = setHeader contentType t
 
 jsonUtf8 :: LT.Text
 jsonUtf8 = "application/json;charset=utf-8"
+
+runRedis :: R.Connection -> R.Redis a -> ActionM a
+runRedis c r = liftIO $ R.runRedis c r
 
 {-
 main = do
