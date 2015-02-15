@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Web.Scotty
+import Network.HTTP.Types.Status (badRequest400)
 
 import Data.Monoid (mconcat)
 import Control.Monad.IO.Class
@@ -20,19 +21,99 @@ import qualified Data.Map as M
 import DeckAroundCore
 import DeckAroundCoreJson
 
---main = print $ endVoting $ Voting sampleRound $ Game samplePlayers []
---main = putStrLn $ (BSC.unpack . BSC.concat . BSL.toChunks) $ encode $ sampleGame
---main = putStrLn $ (BSC.unpack . BSC.concat . BSL.toChunks) $ encode $ WaitingForPlayers samplePlayers
---main = print $ encode $ Vote man dude
---main = print (decode "{\"voter\":\"Man\",\"votee\":\"Dude\"}" :: Maybe Vote)
---main = print $ encode $ Definition man "Yeah"
---main = print (decode "{\"definition\":\"Yeah\",\"author\":\"Man\"}" :: Maybe Definition)
---main = print $ encode sampleGame
---main = print (decode "{\"players\":[\"Dude\",\"Dudette\",\"Man\"],\"rounds\":[{\"prompt\":\"Mangy Susan\",\"votes\":[{\"voter\":\"Dudette\",\"votee\":\"Man\"},{\"voter\":\"Man\",\"v otee\":\"Dudette\"}],\"dealer\":\"Dude\",\"definitions\":[{\"definition\":\"A cat on a spinning platform\",\"author\":\"Dude\"},{\"definition\":\"A patchy bush\",\"author\":\"Dudette\"},{\"definition\":\"A nasty rash\",\"author\":\"Man\"}]},{\"prompt\":\"Saftey Buzz\",\"votes\":[{\"voter\":\"Man\",\"votee\":\"Dudette\"},{\"voter\":\"Dude\",\"votee\":\"Dudette\"}],\"dealer\":\"Dudette\",\"definitions\":[{\"definition\":\"A drink taken as an excuse for poor decisions later\",\"author\":\"Dudette\"},{\"definition\":\"The guard on an electric razor\",\"author\":\"Man\"},{\"definition\":\"Cutting off hair to get rid of lice\",\"author\": \"Dude\"}]}]}" :: Maybe GameState)
---main = print $ encode $ WaitingForPlayers samplePlayers
---main = print (decode "{\"phase\":\"WaitingForPlayers\",\"players\":[\"Dude\",\"Dudette\",\"Man\"]}" :: Maybe GameState)
---main = print $ encode $ Dealing man sampleGame
-main = print (decode "{\"phase\":\"Dealing\",\"dealer\":\"Man\",\"game\":{\"players\":[\"Dude\",\"Dudette\",\"Man\"],\"rounds\":[{\"prompt\":\"Mangy Susan\",\"votes\":[{\"voter\":\"Dudette\",\"votee\":\"Man\"},{\"voter\":\"Man\",\"votee\":\"Dudette\"}],\"dealer\":\"Dude\",\"definitions\":[{\"definition\":\"A cat on a spinning platform\",\"author\":\"Dude\"},{\"definition\":\"A patchy bush\",\"author\":\"Dudette\"},{\"definition\":\"A nasty rash\",\"author\":\"Man\"}]},{\"prompt\":\"Saftey Buzz\", \"votes\":[{\"voter\":\"Man\",\"votee\":\"Dudette\"},{\"voter\":\"Dude\",\"votee\":\"Dudette\"}],\"dealer\":\"Dudette\",\"definitions\":[{\"definition\":\"A dri nk taken as an excuse for poor decisions later\",\"author\":\"Dudette\"},{\"definition\":\"The guard on an electric razor\",\"author\":\"Man\"},{\"definition\": \"Cutting off hair to get rid of lice\",\"author\":\"Dude\"}]}]}}" :: Maybe GameState)
+main = do
+    scotty 3000 $ do
+        index
+        joinGame
+        startRound
+        setPrompt
+        define
+        moveToVote
+        vote
+        endRound
+
+index :: ScottyM ()
+index = get "/" $ do
+    html $ LT.pack "Hello therea"
+
+joinGame :: ScottyM ()
+joinGame = post "/join" $ do
+    name <- param "name"
+    game <- return $ addPlayer (Dealing (Player name) sampleGame) $ Player name
+    case game of
+        Left NameInUse -> errorJson "name already in use"
+        Left GameInProgress -> errorJson "game already in progress"
+        Right gs -> json gs
+
+startRound :: ScottyM ()
+startRound = post "/deal" $ do
+    game <- return $ deal $ WaitingForPlayers samplePlayers
+    case game of
+        Left NotEnoughPlayers -> errorJson "not enough players"
+        Left NotInDealableState -> errorJson "can't deal right now"
+        Right gs -> json gs
+
+setPrompt :: ScottyM ()
+setPrompt = post "/prompt" $ do
+    term <- param "prompt"
+    game <- return $ stateTerm (Dealing dude $ sampleGame) term
+    case game of
+        Left EmptyTerm -> errorJson "term cannot be empty"
+        Left NotInTermState -> errorJson "can't set term right now"
+        Right gs -> json gs
+
+define :: ScottyM ()
+define = post "/define" $ do
+    user <- return "Dude"  -- This'll get pulled from the cookie
+    definition <- param "definition"
+    game <- return $ setPlayerDefinition (Defining (Round dude "blah" [] []) sampleGame) (Player user) definition
+    case game of
+        Left EmptyDefinition -> errorJson "a definition must be provided"
+        Left NotInDefiningState -> errorJson "can't define right now"
+        Right gs -> json gs
+
+moveToVote :: ScottyM ()
+moveToVote = post "/move-to-vote" $ do
+    game <- return $ startVoting (Defining (Round dude "blah" [] []) sampleGame)
+    case game of
+        Left NotInDefiningState -> errorJson "can't start voting now"
+        Right gs -> json gs
+
+vote :: ScottyM ()
+vote = post "/vote" $ do
+    voter <- return dude  -- This'll get pulled from the cookie
+    votee <- param "votee"
+    game <- return $ setPlayerVote (Voting (Round dude "asdf" [] []) sampleGame) voter $ Player votee
+    case game of
+        Left NotInVotingState -> errorJson "can't vote right now"
+        Right gs -> json gs
+
+endRound :: ScottyM ()
+endRound = post "/tally-votes" $ do
+    game <- return $ endVoting $ Voting (Round dude "qewr" [] []) sampleGame
+    case game of
+        Left NotInVotingState -> errorJson "can't end round right now"
+        Right gs -> json gs
+
+errorJson :: String -> ActionM ()
+errorJson e = do
+    json $ object ["error" .= e]
+    status badRequest400
+
+--sendJson :: a -> ActionM ()
+--sendJson a = do
+--    json a
+--    setContentType jsonUtf8
+
+contentType :: LT.Text
+contentType = "Content-Type"
+
+setContentType :: LT.Text -> ActionM ()
+setContentType t = setHeader contentType t
+
+jsonUtf8 :: LT.Text
+jsonUtf8 = "application/json;charset=utf-8"
+
 {-
 main = do
   conn <- R.connect R.defaultConnectInfo

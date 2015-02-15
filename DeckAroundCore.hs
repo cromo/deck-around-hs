@@ -3,17 +3,6 @@ module DeckAroundCore where
 import Data.Maybe (fromMaybe)
 import Data.List (unionBy)
 
---main = print $ endVoting $ Voting sampleRound $ Game samplePlayers []
---main = print $ setPlayerVote (Voting sampleRound $ Game samplePlayers []) dudette dude
---main = print $ setPlayerDefinition (Defining sampleRound $ Game samplePlayers []) dude "wassup"
---main = print $ stateTerm (Dealing dude $ Game samplePlayers []) "Mangy Susan"
---main = print $ deal $ EndOfRound $ Game [dude, dudette, man] [sampleRound]
---main = print $ addPlayer (Dealing dude (Game [] [])) man
---main = print $ addPlayer (WaitingForPlayers [dude]) man
---main = print $ scoreGame sampleGame
---main = print $ scoreRounds [sampleRound, sampleRound2] samplePlayers
---main = print $ scoreRound sampleRound2 samplePlayers
-
 dude = Player "Dude"
 dudette = Player "Dudette"
 man = Player "Man"

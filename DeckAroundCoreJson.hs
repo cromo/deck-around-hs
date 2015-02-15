@@ -55,7 +55,6 @@ phase p = phaseKey .= p
 
 instance ToJSON GameState where
     toJSON (WaitingForPlayers ps) = object
-        --[ phase .= String "WaitingForPlayers"
         [ phase waitingForPlayersPhase
         , playersKey .= ps
         ]

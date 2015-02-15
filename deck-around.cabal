@@ -30,6 +30,7 @@ executable deck-around
     containers,
     scotty >=0.9 && <0.10,
     cookie >=0.4 && <0.5,
-    hedis >=0.6 && <0.7
+    hedis >=0.6 && <0.7,
+    http-types
   -- hs-source-dirs:      
   default-language:    Haskell2010
