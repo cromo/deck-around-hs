@@ -51,7 +51,8 @@ saveGame r gs = runRedis r $ R.set "game" $ BSL.toStrict $ encode gs
 --        Nothing -> return $ WaitingForPlayers []
 
 index r = get "/" $ do
-    g <- loadGame r
+    --g <- loadGame r
+    g <- return $ WaitingForPlayers []
     saveGame r $ g
     html $ LT.pack $ show "hi"
 
