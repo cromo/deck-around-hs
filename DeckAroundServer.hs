@@ -41,20 +41,21 @@ redisConnectInfo = R.defaultConnectInfo {R.connectHost = "redis"}
 saveGame :: ToJSON a => R.Connection -> a -> ActionM (Either R.Reply R.Status)
 saveGame r gs = runRedis r $ R.set "game" $ BSL.toStrict $ encode gs
 
---loadGame :: R.Connection -> ActionM (GameState)
---loadGame r = do
---    game <- runRedis r $ R.get "game"
---    case game of
---        Just (Just result) -> case decode $ BSL.fromStrict result of
---            Just gs -> return gs
---            Nothing -> return $ WaitingForPlayers []
---        Nothing -> return $ WaitingForPlayers []
+loadGame :: R.Connection -> ActionM GameState
+loadGame r = do
+    game <- runRedis r $ R.get "game"
+    return $ case game of
+        Right (Just result) -> case decode $ BSL.fromStrict result of
+            Just gs -> gs
+            Nothing -> WaitingForPlayers [Player "unable to parse game"]
+        Right Nothing -> WaitingForPlayers [Player "key didn't exist"]
+        Left _ -> WaitingForPlayers [Player "failed to read redis"]
 
 index r = get "/" $ do
-    --g <- loadGame r
-    g <- return $ WaitingForPlayers []
+    g <- loadGame r
+    --g <- return $ WaitingForPlayers []
     saveGame r $ g
-    html $ LT.pack $ show "hi"
+    html $ LT.pack $ show g
 
 joinGame :: ScottyM ()
 joinGame = post "/join" $ do
