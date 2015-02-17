@@ -5,6 +5,8 @@ import Network.HTTP.Types.Status (badRequest400)
 
 import Data.Monoid (mconcat)
 import Control.Monad.IO.Class
+import Control.Monad (join,when)
+import Data.Maybe (isNothing)
 import qualified Data.Text.Lazy as LT
 import Data.Text.Lazy.Encoding (encodeUtf8,decodeUtf8)
 import Data.Aeson (decode,encode,ToJSON(toJSON),object,(.=))
@@ -23,9 +25,8 @@ import DeckAroundCoreJson
 
 main = do
     conn <- R.connect redisConnectInfo
-    redis <- return $ liftIO . R.runRedis conn
     scotty 3000 $ do
-        index redis
+        index conn
         joinGame
         startRound
         setPrompt
@@ -37,9 +38,22 @@ main = do
 redisConnectInfo :: R.ConnectInfo
 redisConnectInfo = R.defaultConnectInfo {R.connectHost = "redis"}
 
-index redis = get "/" $ do
-    ping <- redis R.ping
-    html $ LT.pack $ show ping
+saveGame :: ToJSON a => R.Connection -> a -> ActionM (Either R.Reply R.Status)
+saveGame r gs = runRedis r $ R.set "game" $ BSL.toStrict $ encode gs
+
+--loadGame :: R.Connection -> ActionM (GameState)
+--loadGame r = do
+--    game <- runRedis r $ R.get "game"
+--    case game of
+--        Just (Just result) -> case decode $ BSL.fromStrict result of
+--            Just gs -> return gs
+--            Nothing -> return $ WaitingForPlayers []
+--        Nothing -> return $ WaitingForPlayers []
+
+index r = get "/" $ do
+    g <- loadGame r
+    saveGame r $ g
+    html $ LT.pack $ show "hi"
 
 joinGame :: ScottyM ()
 joinGame = post "/join" $ do
