@@ -51,6 +51,7 @@ loadGame r = do
         Right Nothing -> WaitingForPlayers []
         Left _ -> WaitingForPlayers []
 
+index :: R.Connection -> ScottyM ()
 index r = get "/" $ do
     g <- loadGame r
     saveGame r $ g
@@ -135,6 +136,8 @@ endRound r = post "/tally-votes" $ do
         Right gs -> do
             saveGame r gs
             json gs
+
+
 
 errorJson :: String -> ActionM ()
 errorJson e = do
