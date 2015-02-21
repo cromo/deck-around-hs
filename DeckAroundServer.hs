@@ -34,6 +34,7 @@ main = do
         moveToVote conn
         vote conn
         endRound conn
+        reset conn
 
 redisConnectInfo :: R.ConnectInfo
 redisConnectInfo = R.defaultConnectInfo {R.connectHost = "redis"}
@@ -137,7 +138,11 @@ endRound r = post "/tally-votes" $ do
             saveGame r gs
             json gs
 
-
+reset :: R.Connection -> ScottyM ()
+reset r = post "/reset" $ do
+    gs <- return $ WaitingForPlayers []
+    saveGame r gs
+    json gs
 
 errorJson :: String -> ActionM ()
 errorJson e = do
