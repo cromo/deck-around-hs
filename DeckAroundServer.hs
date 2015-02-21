@@ -27,13 +27,13 @@ main = do
     conn <- R.connect redisConnectInfo
     scotty 3000 $ do
         index conn
-        joinGame
-        startRound
-        setPrompt
-        define
-        moveToVote
-        vote
-        endRound
+        joinGame conn
+        startRound conn
+        setPrompt conn
+        define conn
+        moveToVote conn
+        vote conn
+        endRound conn
 
 redisConnectInfo :: R.ConnectInfo
 redisConnectInfo = R.defaultConnectInfo {R.connectHost = "redis"}
@@ -47,74 +47,94 @@ loadGame r = do
     return $ case game of
         Right (Just result) -> case decode $ BSL.fromStrict result of
             Just gs -> gs
-            Nothing -> WaitingForPlayers [Player "unable to parse game"]
-        Right Nothing -> WaitingForPlayers [Player "key didn't exist"]
-        Left _ -> WaitingForPlayers [Player "failed to read redis"]
+            Nothing -> WaitingForPlayers []
+        Right Nothing -> WaitingForPlayers []
+        Left _ -> WaitingForPlayers []
 
 index r = get "/" $ do
     g <- loadGame r
-    --g <- return $ WaitingForPlayers []
     saveGame r $ g
     html $ LT.pack $ show g
 
-joinGame :: ScottyM ()
-joinGame = post "/join" $ do
+joinGame :: R.Connection -> ScottyM ()
+joinGame r = post "/join" $ do
     name <- param "name"
-    game <- return $ addPlayer (Dealing (Player name) sampleGame) $ Player name
+    game <- loadGame r
+    game <- return $ addPlayer game $ Player name
     case game of
         Left NameInUse -> errorJson "name already in use"
         Left GameInProgress -> errorJson "game already in progress"
-        Right gs -> json gs
+        Right gs -> do
+            saveGame r gs
+            json gs
 
-startRound :: ScottyM ()
-startRound = post "/deal" $ do
-    game <- return $ deal $ WaitingForPlayers samplePlayers
+startRound :: R.Connection -> ScottyM ()
+startRound r = post "/deal" $ do
+    game <- loadGame r
+    game <- return $ deal game
     case game of
         Left NotEnoughPlayers -> errorJson "not enough players"
         Left NotInDealableState -> errorJson "can't deal right now"
-        Right gs -> json gs
+        Right gs -> do
+            saveGame r gs
+            json gs
 
-setPrompt :: ScottyM ()
-setPrompt = post "/prompt" $ do
+setPrompt :: R.Connection -> ScottyM ()
+setPrompt r = post "/prompt" $ do
     term <- param "prompt"
-    game <- return $ stateTerm (Dealing dude $ sampleGame) term
+    game <- loadGame r
+    game <- return $ stateTerm game term
     case game of
         Left EmptyTerm -> errorJson "term cannot be empty"
         Left NotInTermState -> errorJson "can't set term right now"
-        Right gs -> json gs
+        Right gs -> do
+            saveGame r gs
+            json gs
 
-define :: ScottyM ()
-define = post "/define" $ do
-    user <- return "Dude"  -- This'll get pulled from the cookie
+define :: R.Connection -> ScottyM ()
+define r = post "/define" $ do
+    name <- param "name"
     definition <- param "definition"
-    game <- return $ setPlayerDefinition (Defining (Round dude "blah" [] []) sampleGame) (Player user) definition
+    game <- loadGame r
+    game <- return $ setPlayerDefinition game (Player name) definition
     case game of
         Left EmptyDefinition -> errorJson "a definition must be provided"
         Left NotInDefiningState -> errorJson "can't define right now"
-        Right gs -> json gs
+        Right gs -> do
+            saveGame r gs
+            json gs
 
-moveToVote :: ScottyM ()
-moveToVote = post "/move-to-vote" $ do
-    game <- return $ startVoting (Defining (Round dude "blah" [] []) sampleGame)
+moveToVote :: R.Connection -> ScottyM ()
+moveToVote r = post "/move-to-vote" $ do
+    game <- loadGame r
+    game <- return $ startVoting game
     case game of
         Left NotInDefiningState -> errorJson "can't start voting now"
-        Right gs -> json gs
+        Right gs -> do
+            saveGame r gs
+            json gs
 
-vote :: ScottyM ()
-vote = post "/vote" $ do
-    voter <- return dude  -- This'll get pulled from the cookie
+vote :: R.Connection -> ScottyM ()
+vote r = post "/vote" $ do
+    voter <- param "voter"
     votee <- param "votee"
-    game <- return $ setPlayerVote (Voting (Round dude "asdf" [] []) sampleGame) voter $ Player votee
+    game <- loadGame r
+    game <- return $ setPlayerVote game (Player voter) $ Player votee
     case game of
         Left NotInVotingState -> errorJson "can't vote right now"
-        Right gs -> json gs
+        Right gs -> do
+            saveGame r gs
+            json gs
 
-endRound :: ScottyM ()
-endRound = post "/tally-votes" $ do
-    game <- return $ endVoting $ Voting (Round dude "qewr" [] []) sampleGame
+endRound :: R.Connection -> ScottyM ()
+endRound r = post "/tally-votes" $ do
+    game <- loadGame r
+    game <- return $ endVoting game
     case game of
         Left NotInVotingState -> errorJson "can't end round right now"
-        Right gs -> json gs
+        Right gs -> do
+            saveGame r gs
+            json gs
 
 errorJson :: String -> ActionM ()
 errorJson e = do
