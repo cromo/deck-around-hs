@@ -54,9 +54,9 @@ loadGame r = do
 
 index :: R.Connection -> ScottyM ()
 index r = get "/" $ do
-    g <- loadGame r
-    saveGame r $ g
-    html $ LT.pack $ show g
+    gs <- loadGame r
+    saveGame r $ gs
+    json gs
 
 joinGame :: R.Connection -> ScottyM ()
 joinGame r = post "/join" $ do
