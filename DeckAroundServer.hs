@@ -2,6 +2,7 @@
 
 import Web.Scotty
 import Network.HTTP.Types.Status (badRequest400)
+import Network.Wai.Middleware.StreamFile (streamFile)
 
 import Data.Monoid (mconcat)
 import Control.Monad.IO.Class
@@ -26,7 +27,10 @@ import DeckAroundCoreJson
 main = do
     conn <- R.connect redisConnectInfo
     scotty 3000 $ do
+        middleware streamFile
+
         index conn
+        getStatus conn
         joinGame conn
         startRound conn
         setPrompt conn
@@ -56,6 +60,18 @@ index :: R.Connection -> ScottyM ()
 index r = get "/" $ do
     gs <- loadGame r
     saveGame r $ gs
+    --json gs
+    setContentType htmlUtf8
+    file "player.html"
+
+playerClient :: ScottyM ()
+playerClient = get "/player.js" $ do
+    setContentType javascript
+    file "player.js"
+
+getStatus :: R.Connection -> ScottyM ()
+getStatus r = get "/status" $ do
+    gs <- loadGame r
     json gs
 
 joinGame :: R.Connection -> ScottyM ()
@@ -157,6 +173,12 @@ setContentType t = setHeader contentType t
 
 jsonUtf8 :: LT.Text
 jsonUtf8 = "application/json;charset=utf-8"
+
+htmlUtf8 :: LT.Text
+htmlUtf8 = "text/html;charset=utf-8"
+
+javascript :: LT.Text
+javascript = "application/javascript"
 
 runRedis :: R.Connection -> R.Redis a -> ActionM a
 runRedis c r = liftIO $ R.runRedis c r
