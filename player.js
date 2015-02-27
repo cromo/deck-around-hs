@@ -139,6 +139,8 @@ var DeckAround = React.createClass({
       "Dealing": <Dealing dealer={this.state.game.dealer}
         player={this.state.player} onPrompt={this.onPrompt} />,
       "Defining": <Defining
+        prompt={this.state.game.roundInProgress &&
+          this.state.game.roundInProgress.prompt}
         dealer={this.state.game.roundInProgress &&
           this.state.game.roundInProgress.dealer}
         player={this.state.player}
@@ -259,6 +261,7 @@ var Defining = React.createClass({
     var thereAreAtLeastThreeDefinitions = 3 <= this.props.definitions.length;
     return (
       <div>
+        <h1>{this.props.prompt}</h1>
         <DefiningForm onDefine={this.props.onDefine} />
         {playerIsTheDealer && theDealerDefinitionExists &&
           thereAreAtLeastThreeDefinitions ? <StartVoting
