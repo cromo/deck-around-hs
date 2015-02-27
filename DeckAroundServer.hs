@@ -40,6 +40,8 @@ main = do
         endRound conn
         reset conn
 
+        playerClient
+
 redisConnectInfo :: R.ConnectInfo
 redisConnectInfo = R.defaultConnectInfo {R.connectHost = "redis"}
 
