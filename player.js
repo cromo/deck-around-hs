@@ -285,7 +285,8 @@ var Defining = React.createClass({
         function(def) {
       return def.author;
     }).indexOf(this.props.dealer);
-    var thereAreAtLeastThreeDefinitions = 3 <= this.props.definitions.length;
+    var allDefinitionsSubmitted =
+      this.props.players.length == this.props.definitions.length;
     return (
       <div>
         <h1>{this.props.prompt}</h1>
@@ -295,7 +296,7 @@ var Defining = React.createClass({
           {submissionStatus}
         </div>
         {playerIsTheDealer && theDealerDefinitionExists &&
-          thereAreAtLeastThreeDefinitions ? <StartVoting
+          allDefinitionsSubmitted ? <StartVoting
           onStartVoting={this.props.onStartVoting} /> : ''}
       </div>
     );
@@ -371,6 +372,9 @@ var Voting = React.createClass({
       return weightedDefinition.definition;
     });
 
+    var allVotesSubmitted =
+      this.props.players.length - 1 == this.props.votes.length;
+
     if (amDealer) {
       definitionElements = weightedDefinitions.map(function(definition) {
         return <p>{definition.definition}</p>;
@@ -383,9 +387,11 @@ var Voting = React.createClass({
             <div>Players ready</div>
             {submissionStatus}
           </div>
-          <button onClick={this.onEndVoting}>End Voting</button>
+          {allVotesSubmitted ? <button
+            onClick={this.onEndVoting}>End Voting</button> : ''}
         </div>
       );
+//          <button onClick={this.onEndVoting}>End Voting</button>
     };
     return (
       <div>
