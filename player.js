@@ -131,7 +131,7 @@ var DeckAround = React.createClass({
     setInterval(this.loadGameStateFromServer, this.props.pollInterval);
   },
   render: function() {
-    return {
+    var primaryContent = {
       "NotConnected": <NotConnected />,
       "WaitingForPlayers": <WaitingForPlayers
         players={this.state.game.players} player={this.state.player}
@@ -168,6 +168,19 @@ var DeckAround = React.createClass({
         rounds={this.state.game.game && this.state.game.game.rounds}
         onReset={this.onReset} />
     }[this.state.game.phase] || <div>unhandled game phase: {this.state.game.phase}</div>;
+    if (-1 < ["Dealing", "Defining", "Voting", "EndOfRound", "Over"].indexOf(
+      this.state.game.phase)) {
+      return (
+        <div>
+          <div className="score">
+            Score: {playerScoreInGame(this.state.player,
+              this.state.game.game.rounds)}
+          </div>
+          {primaryContent}
+        </div>
+      );
+    }
+    return primaryContent;
   }
 });
 
@@ -470,14 +483,26 @@ function playerScoreInRound(player, round) {
   return 2 * timesVotedFor + +votedCorrectly;
 }
 
+function playerScoreInGame(player, rounds) {
+  return rounds.map(function(round) {
+    return playerScoreInRound(player, round);
+  }).reduce(function(totalScore, roundScore) {
+    return totalScore + roundScore;
+  }, 0);
+}
+
 function endOfRoundSummary(players, rounds) {
   var lastRound = rounds[rounds.length - 1];
   var scores = {};
   players.forEach(function(player) {
     scores[player] = {};
+    scores[player].wasDealer = player == lastRound.dealer;
   });
   lastRound.definitions.forEach(function(definition) {
     scores[definition.author].definition = definition.definition;
+  });
+  lastRound.votes.forEach(function(vote) {
+    scores[vote.voter].votedFor = vote.votee;
   });
   players.forEach(function(player) {
     scores[player].roundScore = playerScoreInRound(player, lastRound);
@@ -496,7 +521,8 @@ function renderRoundSummary(summary) {
     return (
       <tr>
         <td>{player}</td>
-        <td>{score.roundScore}</td>
+        <td>{score.wasDealer ? '-' : score.votedFor}</td>
+        <td>{score.wasDealer ? '-' : score.roundScore}</td>
         <td>{score.totalScore}</td>
         <td>{score.definition}</td>
       </tr>
@@ -506,6 +532,7 @@ function renderRoundSummary(summary) {
     <table>
       <tr>
         <th>Player</th>
+        <th>Vote</th>
         <th>Round</th>
         <th>Total</th>
         <th>Definition</th>
