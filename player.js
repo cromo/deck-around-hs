@@ -144,6 +144,7 @@ var DeckAround = React.createClass({
         dealer={this.state.game.roundInProgress &&
           this.state.game.roundInProgress.dealer}
         player={this.state.player}
+        players={this.state.game.game && this.state.game.game.players}
         definitions={this.state.game.roundInProgress &&
           this.state.game.roundInProgress.definitions}
         onDefine={this.onDefine} onStartVoting={this.onStartVoting} />,
@@ -151,8 +152,11 @@ var DeckAround = React.createClass({
         dealer={this.state.game.roundInProgress &&
           this.state.game.roundInProgress.dealer}
         definitions={this.state.game.roundInProgress &&
-          this.state.game.roundInProgress.definitions} onVote={this.onVote}
-          onEndVoting={this.onEndVoting} />,
+          this.state.game.roundInProgress.definitions}
+        votes={this.state.game.roundInProgress &&
+          this.state.game.roundInProgress.votes}
+        players={this.state.game.game && this.state.game.game.players}
+        onVote={this.onVote} onEndVoting={this.onEndVoting} />,
       "EndOfRound": <EndOfRound player={this.state.player}
         players={this.state.game.game && this.state.game.game.players}
         rounds={this.state.game.game && this.state.game.game.rounds}
@@ -253,6 +257,14 @@ var PromptForm = React.createClass({
 
 var Defining = React.createClass({
   render: function() {
+    var submissionStatus = this.props.players.map(function(player) {
+      return (
+        <div>
+          {playerSubmittedDefinition(player, this.props.definitions) ? '✓' :
+            '✗'} {player}
+        </div>
+      );
+    }.bind(this));
     var playerIsTheDealer = this.props.dealer == this.props.player;
     var theDealerDefinitionExists = -1 < this.props.definitions.map(
         function(def) {
@@ -263,6 +275,10 @@ var Defining = React.createClass({
       <div>
         <h1>{this.props.prompt}</h1>
         <DefiningForm onDefine={this.props.onDefine} />
+        <div>
+          <div>Players ready</div>
+          {submissionStatus}
+        </div>
         {playerIsTheDealer && theDealerDefinitionExists &&
           thereAreAtLeastThreeDefinitions ? <StartVoting
           onStartVoting={this.props.onStartVoting} /> : ''}
@@ -318,6 +334,7 @@ var Voting = React.createClass({
       return (
         <div>
           {definitionElements}
+          {this.props.votes.length}/{this.props.players.length - 1} Voted
           <button onClick={this.onEndVoting}>End Voting</button>
         </div>
       );
@@ -382,6 +399,12 @@ var Over = React.createClass({
     );
   }
 });
+
+function playerSubmittedDefinition(player, definitions) {
+  return definitions.reduce(function(submittedDefinition, definition) {
+    return submittedDefinition || definition.author == player;
+  }, false);
+}
 
 function playerScoreInRound(player, round) {
   if (round.dealer == player) {
