@@ -149,6 +149,8 @@ var DeckAround = React.createClass({
           this.state.game.roundInProgress.definitions}
         onDefine={this.onDefine} onStartVoting={this.onStartVoting} />,
       "Voting": <Voting player={this.state.player}
+        prompt={this.state.game.roundInProgress &&
+          this.state.game.roundInProgress.prompt}
         dealer={this.state.game.roundInProgress &&
           this.state.game.roundInProgress.dealer}
         definitions={this.state.game.roundInProgress &&
@@ -343,6 +345,7 @@ var Voting = React.createClass({
       });
       return (
         <div>
+          <h1>{this.props.prompt}</h1>
           {definitionElements}
           <div>
             <div>Players ready</div>
@@ -354,8 +357,9 @@ var Voting = React.createClass({
     };
     return (
       <div>
+        <h1>{this.props.prompt}</h1>
         <VoteForm player={this.props.player} definitions={definitions}
-          onVote={this.props.onVote} />;
+          onVote={this.props.onVote} />
         <div>
           <div>Players ready</div>
           {submissionStatus}
