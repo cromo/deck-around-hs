@@ -323,6 +323,16 @@ var Voting = React.createClass({
     this.props.onEndVoting();
   },
   render: function() {
+    var submissionStatus = this.props.players.filter(function(player) {
+      return player != this.props.dealer;
+    }.bind(this)).map(function(player) {
+      return (
+        <div>
+          {playerSubmittedVote(player, this.props.votes) ? '✓' : '✗'} {player}
+        </div>
+      );
+    }.bind(this));
+
     var amDealer = this.props.player == this.props.dealer;
     var definitions = this.props.definitions.filter(function(definition) {
       return amDealer || definition.author != this.props.player;
@@ -334,13 +344,24 @@ var Voting = React.createClass({
       return (
         <div>
           {definitionElements}
-          {this.props.votes.length}/{this.props.players.length - 1} Voted
+          <div>
+            <div>Players ready</div>
+            {submissionStatus}
+          </div>
           <button onClick={this.onEndVoting}>End Voting</button>
         </div>
       );
     };
-    return <VoteForm player={this.props.player} definitions={definitions}
-      onVote={this.props.onVote} />;
+    return (
+      <div>
+        <VoteForm player={this.props.player} definitions={definitions}
+          onVote={this.props.onVote} />;
+        <div>
+          <div>Players ready</div>
+          {submissionStatus}
+        </div>
+      </div>
+    );
   }
 });
 
@@ -399,6 +420,12 @@ var Over = React.createClass({
     );
   }
 });
+
+function playerSubmittedVote(player, votes) {
+  return votes.reduce(function(voted, vote) {
+    return voted || vote.voter == player;
+  }, false);
+}
 
 function playerSubmittedDefinition(player, definitions) {
   return definitions.reduce(function(submittedDefinition, definition) {
