@@ -324,6 +324,13 @@ var Voting = React.createClass({
     e.preventDefault();
     this.props.onEndVoting();
   },
+  getInitialState: function() {
+    return {
+      sortingWeights: this.props.definitions.map(function() {
+        return Math.random();
+      })
+    };
+  },
   render: function() {
     var submissionStatus = this.props.players.filter(function(player) {
       return player != this.props.dealer;
@@ -339,8 +346,20 @@ var Voting = React.createClass({
     var definitions = this.props.definitions.filter(function(definition) {
       return amDealer || definition.author != this.props.player;
     }.bind(this));
+
+    var weightedDefinitions = definitions.map(function(definition, i) {
+      return {
+        definition: definition,
+        weight: this.state.sortingWeights[i]
+      };
+    }.bind(this)).sort(function(a, b) {
+      return a.weight - b.weight;
+    }).map(function(weightedDefinition) {
+      return weightedDefinition.definition;
+    });
+
     if (amDealer) {
-      definitionElements = definitions.map(function(definition) {
+      definitionElements = weightedDefinitions.map(function(definition) {
         return <p>{definition.definition}</p>;
       });
       return (
@@ -358,7 +377,7 @@ var Voting = React.createClass({
     return (
       <div>
         <h1>{this.props.prompt}</h1>
-        <VoteForm player={this.props.player} definitions={definitions}
+        <VoteForm player={this.props.player} definitions={weightedDefinitions}
           onVote={this.props.onVote} />
         <div>
           <div>Players ready</div>
