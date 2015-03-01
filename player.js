@@ -172,10 +172,11 @@ var DeckAround = React.createClass({
       this.state.game.phase)) {
       return (
         <div>
-          <div className="score">
+          <div className="score pull-right">
             Score: {playerScoreInGame(this.state.player,
               this.state.game.game.rounds)}
           </div>
+          <div className="clearfix"></div>
           {primaryContent}
         </div>
       );
@@ -210,7 +211,7 @@ var WaitingForPlayers = React.createClass({
     var join = <JoinForm onJoin={this.props.onJoin} />;
     var deal = (
       <form onSubmit={this.deal}>
-        <input type="submit" value="Deal" />
+        <input className="btn btn-default" type="submit" value="Deal" />
       </form>
     );
     return (
@@ -234,8 +235,9 @@ var JoinForm = React.createClass({
   render: function() {
     return (
       <form className="joinForm" onSubmit={this.joinGame}>
-        <input type="text" placeholder="Your name" ref="name" />
-        <input type="submit" value="Join" />
+        <input className="form-control" type="text" placeholder="Your name"
+          ref="name" />
+        <input className="btn btn-default" type="submit" value="Join" />
       </form>
     );
   }
@@ -263,8 +265,9 @@ var PromptForm = React.createClass({
   render: function() {
     return (
       <form className="promptForm" onSubmit={this.statePrompt}>
-        <input type="text" placeholder="The word to define" ref="word" />
-        <input type="submit" value="Share" />
+        <input className="form-control" type="text"
+          placeholder="The word to define" ref="word" />
+        <input className="btn btn-default" type="submit" value="Share" />
       </form>
     );
   }
@@ -312,8 +315,9 @@ var DefiningForm = React.createClass({
   render: function() {
     return (
       <form className="defineForm" onSubmit={this.onDefine}>
-        <textarea placeholder="Write a definition" ref="definition"></textarea>
-        <input type="submit" value="Submit" />
+        <textarea className="form-control" placeholder="Write a definition"
+          ref="definition"></textarea>
+        <input className="btn btn-default" type="submit" value="Submit" />
       </form>
     );
   }
@@ -327,7 +331,7 @@ var StartVoting = React.createClass({
   render: function() {
     return (
       <form className="startVotingForm" onSubmit={this.onStartVoting}>
-        <input type="submit" value="Begin voting" />
+        <input className="btn btn-default" type="submit" value="Begin voting" />
       </form>
     );
   }
@@ -387,11 +391,10 @@ var Voting = React.createClass({
             <div>Players ready</div>
             {submissionStatus}
           </div>
-          {allVotesSubmitted ? <button
+          {allVotesSubmitted ? <button className="btn btn-default"
             onClick={this.onEndVoting}>End Voting</button> : ''}
         </div>
       );
-//          <button onClick={this.onEndVoting}>End Voting</button>
     };
     return (
       <div>
@@ -416,7 +419,8 @@ var VoteForm = React.createClass({
   },
   render: function() {
     var definitions = this.props.definitions.map(function(definition) {
-      return <input type="button" onClick={this.onVote(definition.author)}
+      return <input className="btn btn-default" type="button"
+        onClick={this.onVote(definition.author)}
         value={definition.definition} />;
     }.bind(this));
     return (
@@ -439,7 +443,7 @@ var EndOfRound = React.createClass({
       <div>
         {renderRoundSummary(scores)}
         {this.props.player == lastRound.dealer ?
-          <input type="button" onClick={this.onDeal}
+          <input className="btn btn-default" type="button" onClick={this.onDeal}
             value="Start next round" /> : ''}
       </div>
     );
@@ -457,7 +461,8 @@ var Over = React.createClass({
     return (
       <div>
         {renderRoundSummary(scores)}
-        <input type="button" onClick={this.onReset} value="Start new game" />
+        <input className="btn btn-default" type="button" onClick={this.onReset}
+          value="Start new game" />
       </div>
     );
   }
@@ -535,7 +540,7 @@ function renderRoundSummary(summary) {
     );
   });
   return (
-    <table>
+    <table className="table">
       <tr>
         <th>Player</th>
         <th>Vote</th>

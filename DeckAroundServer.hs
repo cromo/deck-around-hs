@@ -41,6 +41,8 @@ main = do
         reset conn
 
         playerClient
+        playerStyling
+        backgroundImage
 
 redisConnectInfo :: R.ConnectInfo
 redisConnectInfo = R.defaultConnectInfo {R.connectHost = "redis"}
@@ -70,6 +72,18 @@ playerClient :: ScottyM ()
 playerClient = get "/player.js" $ do
     setContentType javascript
     file "player.js"
+
+playerStyling :: ScottyM ()
+playerStyling = get "/player.css" $ do
+    setContentType css
+    file "player.css"
+
+backgroundImage :: ScottyM ()
+backgroundImage = get "/sprinkles.png" $ do
+    setContentType png
+    -- This file is CC BY-SA 3.0; it is by Rebecca Litt, modified by Cristian
+    -- Romo.
+    file "sprinkles.png"
 
 getStatus :: R.Connection -> ScottyM ()
 getStatus r = get "/status" $ do
@@ -179,8 +193,14 @@ jsonUtf8 = "application/json;charset=utf-8"
 htmlUtf8 :: LT.Text
 htmlUtf8 = "text/html;charset=utf-8"
 
+css :: LT.Text
+css = "text/css"
+
 javascript :: LT.Text
 javascript = "application/javascript"
+
+png :: LT.Text
+png = "image/png"
 
 runRedis :: R.Connection -> R.Redis a -> ActionM a
 runRedis c r = liftIO $ R.runRedis c r

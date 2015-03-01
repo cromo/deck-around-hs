@@ -1,0 +1,4 @@
+body { background: url('sprinkles.png'); }
+#content { background: white; border-radius: 20px; margin: 20px 20px 20px 20px; padding: 20px 20px 20px 20px; }
+h1 { margin-top: 0px; }
+score { clear: both; }
